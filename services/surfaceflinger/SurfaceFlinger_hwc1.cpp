@@ -2196,7 +2196,7 @@ bool SurfaceFlinger::doComposeSurfaces(const sp<const DisplayDevice>& hw, const 
                         break;
                     }
                     case HWC_FRAMEBUFFER: {
-                        layer->draw(hw, clip);
+                        layer->draw(hw, clip, 0);
                         break;
                     }
                     case HWC_FRAMEBUFFER_TARGET: {
@@ -2216,7 +2216,7 @@ bool SurfaceFlinger::doComposeSurfaces(const sp<const DisplayDevice>& hw, const 
             const Region clip(dirty.intersect(
                     tr.transform(layer->visibleRegion)));
             if (!clip.isEmpty()) {
-                layer->draw(hw, clip);
+                layer->draw(hw, clip, 0);
             }
         }
     }

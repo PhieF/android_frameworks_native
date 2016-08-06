@@ -246,7 +246,7 @@ protected:
      * onDraw - draws the surface.
      */
     virtual void onDraw(const sp<const DisplayDevice>& hw, const Region& clip,
-            bool useIdentityTransform);
+            bool useIdentityTransform, int i);
 
 public:
     // -----------------------------------------------------------------------
@@ -310,7 +310,7 @@ public:
      * draw - performs some global clipping optimizations
      * and calls onDraw().
      */
-    void draw(const sp<const DisplayDevice>& hw, const Region& clip);
+    void draw(const sp<const DisplayDevice>& hw, const Region& clip, int i);
     void draw(const sp<const DisplayDevice>& hw, bool useIdentityTransform);
     void draw(const sp<const DisplayDevice>& hw);
 
@@ -381,7 +381,7 @@ public:
 #endif
     virtual bool canAllowGPUForProtected() const { return false; }
     virtual void handleOpenGLDraw(const sp<const DisplayDevice>& /*hw*/,
-            Mesh& mesh) const;
+            Mesh& mesh, int i) const;
 
     /*
      * returns the rectangle that crops the content of the layer and scales it
@@ -504,8 +504,8 @@ private:
     // drawing
     void clearWithOpenGL(const sp<const DisplayDevice>& hw, const Region& clip,
             float r, float g, float b, float alpha) const;
-    virtual void drawWithOpenGL(const sp<const DisplayDevice>& hw, const Region& clip,
-            bool useIdentityTransform) const;
+    void drawWithOpenGL(const sp<const DisplayDevice>& hw, const Region& clip,
+            bool useIdentityTransform,int i) const;
 
     // Temporary - Used only for LEGACY camera mode.
     uint32_t getProducerStickyTransform() const;

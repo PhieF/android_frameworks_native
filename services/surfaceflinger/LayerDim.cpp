@@ -48,8 +48,9 @@ LayerDim::~LayerDim() {
 }
 
 void LayerDim::onDraw(const sp<const DisplayDevice>& hw,
-        const Region& /* clip */, bool useIdentityTransform)
+        const Region& /* clip */, bool useIdentityTransform, int i)
 {
+    i=0;
     const State& s(getDrawingState());
     if (s.alpha>0) {
         Mesh mesh(Mesh::TRIANGLE_FAN, 4, 2);

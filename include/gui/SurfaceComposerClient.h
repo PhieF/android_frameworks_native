@@ -192,6 +192,8 @@ public:
     status_t    setBlurMaskSurface(const sp<IBinder>& id, const sp<IBinder>& maskSurfaceId);
     status_t    setBlurMaskSampling(const sp<IBinder>& id, uint32_t blurMaskSampling);
     status_t    setBlurMaskAlphaThreshold(const sp<IBinder>& id, float alpha);
+	/* add by allwinner */
+	static int setDisplayParameter(int displayId, int cmd, int para0, int para1, int para2);
 
 private:
     virtual void onFirstRef();

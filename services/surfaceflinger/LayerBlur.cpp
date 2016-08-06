@@ -113,8 +113,9 @@ LayerBlur::~LayerBlur() {
 }
 
 void LayerBlur::onDraw(const sp<const DisplayDevice>& hw, const Region& /*clip*/,
-        bool useIdentityTransform)
+        bool useIdentityTransform, int i)
 {
+    i=0;
     clock_t t1 = clock();
     const ScopedTrace traceTotal(ATRACE_TAG, "Blur.onDraw");
 

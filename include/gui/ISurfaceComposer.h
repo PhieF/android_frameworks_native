@@ -175,6 +175,8 @@ public:
      */
     virtual status_t getHdrCapabilities(const sp<IBinder>& display,
             HdrCapabilities* outCapabilities) const = 0;
+	/* add by allwinner */
+	virtual int setDisplayParameter(int displayId, int cmd, int para0, int para1, int para2) = 0;
 };
 
 // ----------------------------------------------------------------------------
@@ -206,6 +208,7 @@ public:
         GET_DISPLAY_COLOR_MODES,
         GET_ACTIVE_COLOR_MODE,
         SET_ACTIVE_COLOR_MODE,
+	SET_DISPLAY_PARAMETER,
     };
 
     virtual status_t onTransact(uint32_t code, const Parcel& data,

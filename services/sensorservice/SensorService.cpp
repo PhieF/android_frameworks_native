@@ -747,6 +747,7 @@ bool SensorService::SensorEventAckReceiver::threadLoop() {
 
 void SensorService::recordLastValueLocked(
         const sensors_event_t* buffer, size_t count) {
+    const sensors_event_t* last = NULL;
     for (size_t i = 0; i < count; i++) {
         if (buffer[i].type == SENSOR_TYPE_META_DATA ||
             buffer[i].type == SENSOR_TYPE_DYNAMIC_SENSOR_META ||
@@ -758,6 +759,11 @@ void SensorService::recordLastValueLocked(
         if (logger != mRecentEvent.end()) {
             logger->second->addEvent(buffer[i]);
         }
+        last = &buffer[i];
+    }
+    if (last && last->sensor <= 25) {
+	auto logger = mRecentEvent.find(last->sensor);
+        logger->second->addEvent(*last);
     }
 }
 

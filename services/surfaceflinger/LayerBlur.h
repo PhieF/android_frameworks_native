@@ -43,7 +43,7 @@ public:
 
     virtual const char* getTypeId() const { return "LayerBlur"; }
     virtual void onDraw(const sp<const DisplayDevice>& hw, const Region& clip,
-            bool useIdentityTransform);
+            bool useIdentityTransform, int i);
     virtual bool isOpaque(const Layer::State& /*s*/) const { return false; }
     virtual bool isSecure() const         { return false; }
     virtual bool isFixedSize() const      { return true; }

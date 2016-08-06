@@ -89,7 +89,6 @@ typedef enum OMX_VIDEO_CODINGTYPE {
     OMX_VIDEO_CodingVP9,        /**< Google VP9 */
     OMX_VIDEO_CodingHEVC,       /**< ITU H.265/HEVC */
     OMX_VIDEO_CodingDolbyVision,/**< Dolby Vision */
-
     // add by xiwang
     OMX_VIDEO_CodingVP6,
     OMX_VIDEO_CodingMPEG1,
@@ -102,7 +101,6 @@ typedef enum OMX_VIDEO_CODINGTYPE {
     OMX_VIDEO_CodingWMV1,
     OMX_VIDEO_CodingWMV2,
     // end
-
     OMX_VIDEO_CodingKhronosExtensions = 0x6F000000, /**< Reserved region for introducing Khronos Standard Extensions */
     OMX_VIDEO_CodingVendorStartUnused = 0x7F000000, /**< Reserved region for introducing Vendor Extensions */
     OMX_VIDEO_CodingMax = 0x7FFFFFFF

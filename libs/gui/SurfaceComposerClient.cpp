@@ -906,6 +906,13 @@ status_t SurfaceComposerClient::getHdrCapabilities(const sp<IBinder>& display,
     return ComposerService::getComposerService()->getHdrCapabilities(display,
             outCapabilities);
 }
+/* add by allwinner */
+int SurfaceComposerClient::setDisplayParameter(
+        int displayId, int cmd, int para0, int para1, int para2)
+{
+    return ComposerService::getComposerService()->setDisplayParameter(displayId,
+            cmd, para0, para1, para2);
+}
 
 // ----------------------------------------------------------------------------
 

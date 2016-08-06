@@ -163,6 +163,8 @@ public:
     // Extensions
     virtual inline bool isVDSEnabled() const { return true; };
 
+	int setDisplayParameter(int disp, int cmd, int para0, int para1, int para2) const;
+
 private:
     static const int32_t VIRTUAL_DISPLAY_ID_BASE = 2;
 
@@ -220,6 +222,11 @@ private:
 
     // thread-safe
     mutable Mutex mVsyncLock;
+    mutable Mutex mEventControlLock;
+
+    // others
+    bool mFullScreenVideo;
+    int mMaxLayers;
 };
 
 // ---------------------------------------------------------------------------

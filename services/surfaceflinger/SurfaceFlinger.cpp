@@ -666,6 +666,30 @@ status_t SurfaceFlinger::getDisplayConfigs(const sp<IBinder>& display,
 
         // All non-virtual displays are currently considered secure.
         info.secure = true;
+		if (type == DisplayDevice::DISPLAY_PRIMARY) {
+			char property[PROPERTY_VALUE_MAX];
+		if (property_get("ro.sf.rotation", property, NULL) > 0) {
+			switch (atoi(property)) {
+				case 90:
+					info.orientation = (info.orientation - 1 + 4) % 4;
+					info.w = hwConfig.height;
+					info.h = hwConfig.width;
+					info.xdpi = ydpi;
+					info.ydpi = xdpi;
+					break;
+				case 180:
+					info.orientation = (info.orientation - 2 + 4) % 4;
+					break;
+				case 270:
+					info.orientation = (info.orientation - 3 + 4) % 4;
+					info.w = hwConfig.height;
+					info.h = hwConfig.width;
+					info.xdpi = ydpi;
+					info.ydpi = xdpi;
+					break;
+			}
+		}
+	}
 
         configs->push_back(info);
     }
@@ -1606,7 +1630,24 @@ void SurfaceFlinger::handleTransactionLocked(uint32_t transactionFlags)
                                 || (state.viewport != draw[i].viewport)
                                 || (state.frame != draw[i].frame))
                         {
-                            disp->setProjection(state.orientation,
+                            int orientation = state.orientation;
+                            if (state.type == DisplayDevice::DISPLAY_PRIMARY) {
+                                char property[PROPERTY_VALUE_MAX];
+                                if (property_get("ro.sf.rotation", property, NULL) > 0) {
+                                    switch (atoi(property)) {
+                                        case 90:
+                                            orientation = (state.orientation + 1) % 4;
+                                            break;
+                                        case 180:
+                                            orientation = (state.orientation + 2) % 4;
+                                            break;
+                                        case 270:
+                                            orientation = (state.orientation + 3) % 4;
+                                            break;
+                                    }
+                                }
+                            }
+                            disp->setProjection(orientation,
                                     state.viewport, state.frame);
                         }
                         if (state.width != draw[i].width || state.height != draw[i].height) {
@@ -2203,6 +2244,9 @@ bool SurfaceFlinger::doComposeSurfaces(
                     }
                     case HWC2::Composition::Client: {
                         layer->draw(displayDevice, clip);
+                        break:
+                    case HWC_FRAMEBUFFER: {
+                        layer->draw(hw, clip, i);
                         break;
                     }
                     default:
@@ -2219,7 +2263,11 @@ bool SurfaceFlinger::doComposeSurfaces(
             const Region clip(dirty.intersect(
                     displayTransform.transform(layer->visibleRegion)));
             if (!clip.isEmpty()) {
+<<<<<<< HEAD
                 layer->draw(displayDevice, clip);
+=======
+                layer->draw(hw, clip, i);
+>>>>>>> 7fcda5d33... Initial Pine64 checkin
             }
         }
     }
@@ -2666,6 +2714,10 @@ void SurfaceFlinger::onInitializeDisplays() {
     // reset screen orientation and use primary layer stack
     Vector<ComposerState> state;
     Vector<DisplayState> displays;
+    sp<const DisplayDevice> hw(getDefaultDisplayDevice());
+    const uint32_t hw_w = hw->getWidth();
+    const uint32_t hw_h = hw->getHeight();
+
     DisplayState d;
     d.what = DisplayState::eDisplayProjectionChanged |
              DisplayState::eLayerStackChanged;
@@ -2676,6 +2728,25 @@ void SurfaceFlinger::onInitializeDisplays() {
     d.viewport.makeInvalid();
     d.width = 0;
     d.height = 0;
+    char property[PROPERTY_VALUE_MAX];
+    if (property_get("ro.sf.rotation", property, NULL) > 0) {
+        switch (atoi(property)) {
+            case 90:
+                d.frame = Rect(hw_h, hw_w);
+                d.viewport = Rect(hw_h, hw_w);
+                break;
+            case 180:
+                d.frame = Rect(hw_w, hw_h);
+                d.viewport = Rect(hw_w, hw_h);
+                break;
+            case 270:
+                d.frame = Rect(hw_h, hw_w);
+                d.viewport = Rect(hw_h, hw_w);
+                break;
+            default:
+                break;
+        }
+    }
     displays.add(d);
     setTransactionState(state, displays, 0);
     setPowerModeInternal(getDisplayDevice(d.token), HWC_POWER_MODE_NORMAL);
@@ -3717,6 +3788,9 @@ status_t SurfaceFlinger::captureScreenImplLocked(
 {
     ATRACE_CALL();
 
+    char property[PROPERTY_VALUE_MAX];
+    property_get("ro.sf.rotation", property, NULL);
+
     // get screen geometry
     uint32_t hw_w = hw->getWidth();
     uint32_t hw_h = hw->getHeight();
@@ -3725,16 +3799,38 @@ status_t SurfaceFlinger::captureScreenImplLocked(
         std::swap(hw_w, hw_h);
     }
 
-    if ((reqWidth > hw_w) || (reqHeight > hw_h)) {
-        ALOGE("size mismatch (%d, %d) > (%d, %d)",
-                reqWidth, reqHeight, hw_w, hw_h);
-        return BAD_VALUE;
-    }
+    switch (atoi(property)) {
+        case 90:
+        case 270:
+            if ((reqWidth > hw_h) || (reqHeight > hw_w)) {
+                ALOGE("size mismatch (%d, %d) > (%d, %d)",
+                        reqWidth, reqHeight, hw_h, hw_w);
+                return BAD_VALUE;
+            }
 
+            reqWidth  = (!reqWidth)  ? hw_h : reqWidth;
+            reqHeight = (!reqHeight) ? hw_w : reqHeight;
+            break;
+        case 0:
+        case 180:
+        default:
+            if ((reqWidth > hw_w) || (reqHeight > hw_h)) {
+                ALOGE("size mismatch (%d, %d) > (%d, %d)",
+                        reqWidth, reqHeight, hw_w, hw_h);
+                return BAD_VALUE;
+            }
+
+<<<<<<< HEAD
     ++mActiveFrameSequence;
 
     reqWidth  = (!reqWidth)  ? hw_w : reqWidth;
     reqHeight = (!reqHeight) ? hw_h : reqHeight;
+=======
+            reqWidth  = (!reqWidth)  ? hw_w : reqWidth;
+            reqHeight = (!reqHeight) ? hw_h : reqHeight;
+            break;
+    }
+>>>>>>> 7fcda5d33... Initial Pine64 checkin
 
     bool secureLayerIsVisible = false;
     const LayerVector& layers(mDrawingState.layersSortedByZ);
@@ -3911,9 +4007,20 @@ void SurfaceFlinger::checkScreenshot(size_t w, size_t s, size_t h, void const* v
     }
 }
 
+<<<<<<< HEAD
 bool SurfaceFlinger::getFrameTimestamps(const Layer& layer,
         uint64_t frameNumber, FrameTimestamps* outTimestamps) {
     return mFenceTracker.getFrameTimestamps(layer, frameNumber, outTimestamps);
+=======
+/* add by allwinner */
+int SurfaceFlinger::setDisplayParameter(int displayId, int cmd,
+        int para0, int para1, int para2) {
+    const HWComposer& hwc(getHwComposer());
+    ALOGD("####setDisplayParameter: dispId=%d, cmd = %d, para0 = %d, para1= %d, para2 = %d\n",
+          displayId, cmd, para0, para1, para2);
+
+    return hwc.setDisplayParameter(displayId, cmd, para0, para1, para2);
+>>>>>>> 7fcda5d33... Initial Pine64 checkin
 }
 
 // ---------------------------------------------------------------------------

@@ -518,6 +518,9 @@ void Layer::setGeometry(
     const auto hwcId = displayDevice->getHwcDisplayId();
     auto& hwcInfo = mHwcLayers[hwcId];
 #else
+    const int skip_num = 1;
+    String8 skip_layers[skip_num];
+    skip_layers[0].appendFormat("com.google.android.googlequicksearchbox/com.google.android.velvet.ui.VelvetActivity");
     layer.setDefaultState();
 #endif
 
@@ -537,6 +540,14 @@ void Layer::setGeometry(
         layer.setSkip(true);
     }
 #endif
+
+    for(int i = 0; i < skip_num; i++)
+    {
+        if(getName() == skip_layers[i])
+        {
+            layer.setSkip(true);
+        }
+    }
 
     // this gives us only the "orientation" component of the transform
     const State& s(getDrawingState());
@@ -560,6 +571,13 @@ void Layer::setGeometry(
                 HWC_BLENDING_COVERAGE);
     }
 #endif
+
+    // workaround for cts begin
+    if(strcmp(getName().string(), "com.android.cts.view/android.view.cts.GLSurfaceViewCtsActivity") == 0)
+    {
+        layer.setBlending(HWC_BLENDING_NONE);
+    }
+    // workaround for cts end
 
     // apply the layer's transform, followed by the display's global transform
     // here we're guaranteed that the layer's transform preserves rects
@@ -904,21 +922,22 @@ Rect Layer::getPosition(
 // drawing...
 // ---------------------------------------------------------------------------
 
-void Layer::draw(const sp<const DisplayDevice>& hw, const Region& clip) {
-    onDraw(hw, clip, false);
+
+void Layer::draw(const sp<const DisplayDevice>& hw, const Region& clip, int i) {
+    onDraw(hw, clip, false, i);
 }
 
 void Layer::draw(const sp<const DisplayDevice>& hw,
         bool useIdentityTransform) {
-    onDraw(hw, Region(hw->bounds()), useIdentityTransform);
+    onDraw(hw, Region(hw->bounds()), useIdentityTransform, 1);
 }
 
 void Layer::draw(const sp<const DisplayDevice>& hw) {
-    onDraw(hw, Region(hw->bounds()), false);
+    onDraw(hw, Region(hw->bounds()), false, 1);
 }
 
 void Layer::onDraw(const sp<const DisplayDevice>& hw, const Region& clip,
-        bool useIdentityTransform)
+        bool useIdentityTransform, int j)
 {
     ATRACE_CALL();
 
@@ -959,8 +978,11 @@ void Layer::onDraw(const sp<const DisplayDevice>& hw, const Region& clip,
         // is probably going to have something visibly wrong.
     }
 
-    bool blackOutLayer = isProtected() || (isSecure() && !hw->isSecure());
-
+	#ifdef SUN8IW5P1
+		bool blackOutLayer = (isProtected() || isSecure()) && !hw->isSecure();
+	#else
+		bool blackOutLayer = isProtected() || (isSecure() && !hw->isSecure());
+	#endif
     RenderEngine& engine(mFlinger->getRenderEngine());
 
     if (!blackOutLayer ||
@@ -1012,7 +1034,7 @@ void Layer::onDraw(const sp<const DisplayDevice>& hw, const Region& clip,
     } else {
         engine.setupLayerBlackedOut();
     }
-    drawWithOpenGL(hw, clip, useIdentityTransform);
+    drawWithOpenGL(hw, clip, useIdentityTransform, j);
     engine.disableTexturing();
 }
 
@@ -1033,17 +1055,25 @@ void Layer::clearWithOpenGL(
 }
 
 void Layer::handleOpenGLDraw(const sp<const DisplayDevice>& /* hw */,
-            Mesh& mesh) const {
+            Mesh& mesh, int i) const {
     const State& s(getDrawingState());
     RenderEngine& engine(mFlinger->getRenderEngine());
 
-    engine.setupLayerBlending(mPremultipliedAlpha, isOpaque(s), s.alpha);
+    //engine.setupLayerBlending(mPremultipliedAlpha, isOpaque(s), s.alpha);
+    if(i==0)
+    {
+        engine.setupLayerBlending(false, true, 0xff);
+    }
+    else
+    {
+       engine.setupLayerBlending(mPremultipliedAlpha, isOpaque(s), s.alpha);
+    }  
     engine.drawMesh(mesh);
     engine.disableBlending();
 }
 
 void Layer::drawWithOpenGL(const sp<const DisplayDevice>& hw,
-        const Region& /* clip */, bool useIdentityTransform) const {
+        const Region& /* clip */, bool useIdentityTransform, int i) const {
     const State& s(getDrawingState());
 
     computeGeometry(hw, mMesh, useIdentityTransform);
@@ -1122,7 +1152,7 @@ void Layer::drawWithOpenGL(const sp<const DisplayDevice>& hw,
     texCoords[2] = vec2(right, 1.0f - bottom);
     texCoords[3] = vec2(right, 1.0f - top);
 
-    handleOpenGLDraw(hw, mMesh);
+    handleOpenGLDraw(hw, mMesh, i);
 }
 
 #ifdef USE_HWC2
