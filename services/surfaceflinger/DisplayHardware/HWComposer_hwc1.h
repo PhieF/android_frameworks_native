@@ -333,6 +333,8 @@ public:
             return false;
     };
 
+    int setDisplayParameter(int disp, int cmd, int para0, int para1, int para2) const;
+
 private:
     void loadHwcModule();
     int loadFbHalModule();

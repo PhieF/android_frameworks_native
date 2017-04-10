@@ -2263,11 +2263,7 @@ bool SurfaceFlinger::doComposeSurfaces(
             const Region clip(dirty.intersect(
                     displayTransform.transform(layer->visibleRegion)));
             if (!clip.isEmpty()) {
-<<<<<<< HEAD
-                layer->draw(displayDevice, clip);
-=======
                 layer->draw(hw, clip, i);
->>>>>>> 7fcda5d33... Initial Pine64 checkin
             }
         }
     }
@@ -3820,17 +3816,10 @@ status_t SurfaceFlinger::captureScreenImplLocked(
                 return BAD_VALUE;
             }
 
-<<<<<<< HEAD
-    ++mActiveFrameSequence;
-
-    reqWidth  = (!reqWidth)  ? hw_w : reqWidth;
-    reqHeight = (!reqHeight) ? hw_h : reqHeight;
-=======
             reqWidth  = (!reqWidth)  ? hw_w : reqWidth;
             reqHeight = (!reqHeight) ? hw_h : reqHeight;
             break;
     }
->>>>>>> 7fcda5d33... Initial Pine64 checkin
 
     bool secureLayerIsVisible = false;
     const LayerVector& layers(mDrawingState.layersSortedByZ);
@@ -4007,11 +3996,10 @@ void SurfaceFlinger::checkScreenshot(size_t w, size_t s, size_t h, void const* v
     }
 }
 
-<<<<<<< HEAD
 bool SurfaceFlinger::getFrameTimestamps(const Layer& layer,
         uint64_t frameNumber, FrameTimestamps* outTimestamps) {
     return mFenceTracker.getFrameTimestamps(layer, frameNumber, outTimestamps);
-=======
+}
 /* add by allwinner */
 int SurfaceFlinger::setDisplayParameter(int displayId, int cmd,
         int para0, int para1, int para2) {
@@ -4020,7 +4008,6 @@ int SurfaceFlinger::setDisplayParameter(int displayId, int cmd,
           displayId, cmd, para0, para1, para2);
 
     return hwc.setDisplayParameter(displayId, cmd, para0, para1, para2);
->>>>>>> 7fcda5d33... Initial Pine64 checkin
 }
 
 // ---------------------------------------------------------------------------

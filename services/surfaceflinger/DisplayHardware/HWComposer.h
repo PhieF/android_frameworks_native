@@ -165,6 +165,8 @@ public:
 
 	int setDisplayParameter(int disp, int cmd, int para0, int para1, int para2) const;
 
+    int setDisplayParameter(int disp, int cmd, int para0, int para1, int para2) const;
+
 private:
     static const int32_t VIRTUAL_DISPLAY_ID_BASE = 2;
 
