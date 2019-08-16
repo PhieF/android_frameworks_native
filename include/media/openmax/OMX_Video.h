@@ -96,7 +96,7 @@ typedef enum OMX_VIDEO_CODINGTYPE {
     OMX_VIDEO_CodingS263,
     OMX_VIDEO_CodingMSMPEG4V1,
     OMX_VIDEO_CodingMSMPEG4V2,
-    OMX_VIDEO_CodingDIVX,
+    OMX_VIDEO_CodingDIVX2,
     OMX_VIDEO_CodingXVID,
     OMX_VIDEO_CodingRXG2,
     OMX_VIDEO_CodingWMV1,
