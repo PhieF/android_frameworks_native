@@ -59,7 +59,6 @@ class Colorizer;
 class DisplayDevice;
 class GraphicBuffer;
 class SurfaceFlinger;
-class LayerBlur;
 
 // ---------------------------------------------------------------------------
 
@@ -73,12 +72,7 @@ class LayerBlur;
 class Layer : public SurfaceFlingerConsumer::ContentsChangedListener {
     static int32_t sSequence;
 
-    friend class LayerBlur;
-
 public:
-#ifdef QTI_BSP
-    friend class ExLayer;
-#endif
     mutable bool contentDirty;
     // regions below are in window-manager space
     Region visibleRegion;
@@ -116,7 +110,6 @@ public:
         Geometry requested;
         uint32_t z;
         uint32_t layerStack;
-        uint8_t blur;
 #ifdef USE_HWC2
         float alpha;
 #else
@@ -127,7 +120,6 @@ public:
         uint8_t reserved[2];
         int32_t sequence; // changes when visible regions can change
         bool modified;
-        uint32_t color;
 
         Rect crop;
         Rect requestedCrop;
@@ -159,10 +151,6 @@ public:
     // modify current state
     bool setPosition(float x, float y, bool immediate);
     bool setLayer(uint32_t z);
-    bool setBlur(uint8_t blur);
-    virtual bool setBlurMaskLayer(sp<Layer>& /*maskLayer*/) { return false; }
-    virtual bool setBlurMaskSampling(int32_t /*sampling*/) { return false; }
-    virtual bool setBlurMaskAlphaThreshold(float /*alpha*/) { return false; }
     bool setSize(uint32_t w, uint32_t h);
 #ifdef USE_HWC2
     bool setAlpha(float alpha);
@@ -177,7 +165,6 @@ public:
     bool setLayerStack(uint32_t layerStack);
     void deferTransactionUntil(const sp<IBinder>& handle, uint64_t frameNumber);
     bool setOverrideScalingMode(int32_t overrideScalingMode);
-    bool setColor(uint32_t color);
 
     // If we have received a new buffer this frame, we will pass its surface
     // damage down to hardware composer. Otherwise, we must send a region with
@@ -188,7 +175,7 @@ public:
     uint32_t getTransactionFlags(uint32_t flags);
     uint32_t setTransactionFlags(uint32_t flags);
 
-    virtual void computeGeometry(const sp<const DisplayDevice>& hw, Mesh& mesh,
+    void computeGeometry(const sp<const DisplayDevice>& hw, Mesh& mesh,
             bool useIdentityTransform) const;
     Rect computeBounds(const Region& activeTransparentRegion) const;
     Rect computeBounds() const;
@@ -236,17 +223,12 @@ public:
      */
     virtual bool isFixedSize() const;
 
-    /*
-     * isBlurLayer - true if this is a LayerBlur instance
-     */
-    virtual bool isBlurLayer() const { return false; }
-
 protected:
     /*
      * onDraw - draws the surface.
      */
     virtual void onDraw(const sp<const DisplayDevice>& hw, const Region& clip,
-            bool useIdentityTransform, int i);
+            bool useIdentityTransform) const;
 
 public:
     // -----------------------------------------------------------------------
@@ -269,7 +251,7 @@ public:
 #else
     void setGeometry(const sp<const DisplayDevice>& hw,
             HWComposer::HWCLayerInterface& layer);
-    virtual void setPerFrameData(const sp<const DisplayDevice>& hw,
+    void setPerFrameData(const sp<const DisplayDevice>& hw,
             HWComposer::HWCLayerInterface& layer);
     void setAcquireFence(const sp<const DisplayDevice>& hw,
             HWComposer::HWCLayerInterface& layer);
@@ -310,9 +292,9 @@ public:
      * draw - performs some global clipping optimizations
      * and calls onDraw().
      */
-    void draw(const sp<const DisplayDevice>& hw, const Region& clip, int i);
-    void draw(const sp<const DisplayDevice>& hw, bool useIdentityTransform);
-    void draw(const sp<const DisplayDevice>& hw);
+    void draw(const sp<const DisplayDevice>& hw, const Region& clip) const;
+    void draw(const sp<const DisplayDevice>& hw, bool useIdentityTransform) const;
+    void draw(const sp<const DisplayDevice>& hw) const;
 
     /*
      * doTransaction - process the transaction. This is a good place to figure
@@ -359,29 +341,7 @@ public:
 
     // Updates the transform hint in our SurfaceFlingerConsumer to match
     // the current orientation of the display device.
-    void updateTransformHint(const sp<const DisplayDevice>& hw);
-
-    /* ------------------------------------------------------------------------
-     * Extensions
-     */
-    virtual bool isExtOnly() const { return false; }
-    virtual bool isIntOnly() const { return false; }
-    virtual bool isSecureDisplay() const { return false; }
-    virtual bool isYuvLayer() const { return false; }
-#ifndef USE_HWC2
-    virtual void setPosition(const sp<const DisplayDevice>& /*hw*/,
-                             HWComposer::HWCLayerInterface& /*layer*/,
-                             const State& /*state*/) { }
-    virtual void setAcquiredFenceIfBlit(int& /*fenceFd */,
-                       HWComposer::HWCLayerInterface& /*layer */) { }
-#else
-    virtual void setPosition(const sp<const DisplayDevice>& /*hw*/,
-                             const State& /*state*/) { }
-    virtual void setAcquiredFenceIfBlit(int& /*fenceFd */) { }
-#endif
-    virtual bool canAllowGPUForProtected() const { return false; }
-    virtual void handleOpenGLDraw(const sp<const DisplayDevice>& /*hw*/,
-            Mesh& mesh, int i) const;
+    void updateTransformHint(const sp<const DisplayDevice>& hw) const;
 
     /*
      * returns the rectangle that crops the content of the layer and scales it
@@ -483,7 +443,6 @@ protected:
         LayerCleaner(const sp<SurfaceFlinger>& flinger, const sp<Layer>& layer);
     };
 
-    Rect reduce(const Rect& win, const Region& exclude) const;
 
 private:
     // Interface implementation for SurfaceFlingerConsumer::ContentsChangedListener
@@ -505,7 +464,7 @@ private:
     void clearWithOpenGL(const sp<const DisplayDevice>& hw, const Region& clip,
             float r, float g, float b, float alpha) const;
     void drawWithOpenGL(const sp<const DisplayDevice>& hw, const Region& clip,
-            bool useIdentityTransform,int i) const;
+            bool useIdentityTransform) const;
 
     // Temporary - Used only for LEGACY camera mode.
     uint32_t getProducerStickyTransform() const;
@@ -662,7 +621,6 @@ private:
 
     bool mAutoRefresh;
     bool mFreezePositionUpdates;
-    uint32_t mTransformHint;
 };
 
 // ---------------------------------------------------------------------------

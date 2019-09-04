@@ -77,7 +77,7 @@ public:
 
     HWComposer(const sp<SurfaceFlinger>& flinger);
 
-    virtual ~HWComposer();
+    ~HWComposer();
 
     void setEventHandler(EventHandler* handler);
 
@@ -160,10 +160,6 @@ public:
 
     // for debugging ----------------------------------------------------------
     void dump(String8& out) const;
-    // Extensions
-    virtual inline bool isVDSEnabled() const { return true; };
-
-	int setDisplayParameter(int disp, int cmd, int para0, int para1, int para2) const;
 
     int setDisplayParameter(int disp, int cmd, int para0, int para1, int para2) const;
 
@@ -224,11 +220,6 @@ private:
 
     // thread-safe
     mutable Mutex mVsyncLock;
-    mutable Mutex mEventControlLock;
-
-    // others
-    bool mFullScreenVideo;
-    int mMaxLayers;
 };
 
 // ---------------------------------------------------------------------------

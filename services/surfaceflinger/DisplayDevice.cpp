@@ -106,7 +106,6 @@ DisplayDevice::DisplayDevice(
     Surface* surface;
     mNativeWindow = surface = new Surface(producer, false);
     ANativeWindow* const window = mNativeWindow.get();
-    char property[PROPERTY_VALUE_MAX];
 
     /*
      * Create our display's surface
@@ -162,15 +161,6 @@ DisplayDevice::DisplayDevice(
             mDisplayName = "Virtual Screen";    // e.g. Overlay #n
             break;
     }
-
-    // we store the value as orientation:
-    // 90 -> 1, 180 -> 2, 270 -> 3
-    mHardwareRotation = property_get_int32("ro.sf.hwrotation", 0) / 90;
-
-    mPanelMountFlip = 0;
-    // 1: H-Flip, 2: V-Flip, 3: 180 (HV Flip)
-    property_get("ro.panel.mountflip", property, "0");
-    mPanelMountFlip = atoi(property);
 
     // initialize the display orientation transform.
     setProjection(DisplayState::eOrientationDefault, mViewport, mFrame);
@@ -467,12 +457,6 @@ status_t DisplayDevice::orientationToTransfrom(
         int orientation, int w, int h, Transform* tr)
 {
     uint32_t flags = 0;
-
-    if (mHardwareRotation && mType == DISPLAY_PRIMARY) {
-        orientation += mHardwareRotation;
-        orientation %= 4;
-    }
-
     switch (orientation) {
     case DisplayState::eOrientationDefault:
         flags = Transform::ROT_0;
@@ -489,11 +473,6 @@ status_t DisplayDevice::orientationToTransfrom(
     default:
         return BAD_VALUE;
     }
-
-    if (DISPLAY_PRIMARY == mHwcDisplayId) {
-        flags = flags ^ getPanelMountFlip();
-    }
-
     tr->set(flags, w, h);
     return NO_ERROR;
 }
@@ -533,11 +512,7 @@ void DisplayDevice::setProjection(int orientation,
     if (!frame.isValid()) {
         // the destination frame can be invalid if it has never been set,
         // in that case we assume the whole display frame.
-        if (mHardwareRotation == 1 || mHardwareRotation == 3) {
-            frame = Rect(h, w);
-        } else {
-            frame = Rect(w, h);
-        }
+        frame = Rect(w, h);
     }
 
     if (viewport.isEmpty()) {

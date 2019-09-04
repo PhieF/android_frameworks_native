@@ -72,10 +72,6 @@ class VirtualDisplaySurface : public DisplaySurface,
                               public BnGraphicBufferProducer,
                               private ConsumerBase {
 public:
-#ifdef QTI_BSP
-    friend class ExVirtualDisplaySurface;
-#endif
-
     VirtualDisplaySurface(HWComposer& hwc, int32_t dispId,
             const sp<IGraphicBufferProducer>& sink,
             const sp<IGraphicBufferProducer>& bqProducer,
@@ -132,7 +128,6 @@ private:
     virtual status_t getLastQueuedBuffer(sp<GraphicBuffer>* outBuffer,
             sp<Fence>* outFence, float outTransformMatrix[16]) override;
     virtual status_t getUniqueId(uint64_t* outId) const override;
-    virtual void setOutputUsage(uint32_t flag);
 
     //
     // Utility methods

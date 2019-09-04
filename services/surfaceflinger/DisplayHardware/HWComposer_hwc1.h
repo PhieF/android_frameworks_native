@@ -76,7 +76,7 @@ public:
             const sp<SurfaceFlinger>& flinger,
             EventHandler& handler);
 
-    virtual ~HWComposer();
+    ~HWComposer();
 
     status_t initCheck() const;
 
@@ -105,9 +105,6 @@ public:
     // set active config
     status_t setActiveConfig(int disp, int mode);
 
-    // get active config
-    int getActiveConfig(int disp) const;
-
     // reset state when an external, non-virtual display is disconnected
     void disconnectDisplay(int disp);
 
@@ -121,9 +118,6 @@ public:
 
     // does this display have layers handled by GLES
     bool hasGlesComposition(int32_t id) const;
-
-    // does this display support dim layer composition
-    bool hasDimComposition() const { return (mDimComp == 1); }
 
     // get the releaseFence file descriptor for a display's framebuffer layer.
     // the release fence is only valid after commit()
@@ -170,7 +164,6 @@ public:
         virtual sp<Fence> getAndResetReleaseFence() = 0;
         virtual void setDefaultState() = 0;
         virtual void setSkip(bool skip) = 0;
-        virtual void setDim(uint32_t color) = 0;
         virtual void setIsCursorLayerHint(bool isCursor = true) = 0;
         virtual void setBlending(uint32_t blending) = 0;
         virtual void setTransform(uint32_t transform) = 0;
@@ -183,7 +176,6 @@ public:
         virtual void setAcquireFenceFd(int fenceFd) = 0;
         virtual void setPlaneAlpha(uint8_t alpha) = 0;
         virtual void onDisplayed() = 0;
-        virtual void setAnimating(bool animating) = 0;
     };
 
     /*
@@ -243,9 +235,6 @@ public:
         }
         bool operator != (const LayerListIterator& rhs) const {
             return !operator==(rhs);
-        }
-        bool operator ! () const {
-             return !mLayerList;
         }
     };
 
@@ -323,18 +312,7 @@ public:
 
     // for debugging ----------------------------------------------------------
     void dump(String8& out) const;
-    /* ------------------------------------------------------------------------
-     * Extensions
-     */
-    virtual inline bool isVDSEnabled() const { return true; };
-
-    // Extension
-    virtual bool isCompositionTypeBlit(const int32_t /*compType*/) const {
-            return false;
-    };
-
-    int setDisplayParameter(int disp, int cmd, int para0, int para1, int para2) const;
-
+	int setDisplayParameter(int disp, int cmd, int para0, int para1, int para2) const;
 private:
     void loadHwcModule();
     int loadFbHalModule();
@@ -412,8 +390,6 @@ private:
 
     // thread-safe
     mutable Mutex mEventControlLock;
-
-    int mDimComp;
 };
 
 // ---------------------------------------------------------------------------

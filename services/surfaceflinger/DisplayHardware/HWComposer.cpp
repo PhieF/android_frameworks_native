@@ -53,14 +53,6 @@
 #include "../Layer.h"           // needed only for debugging
 #include "../SurfaceFlinger.h"
 
-#ifdef SUN8IW5P1
-#include <hardware/../../../aw/hwc/astar/gralloc_priv.h>
-#elif defined SUN8IW6P1
-#include <hardware/hal_public.h>
-#elif defined SUN9IW1P1
-#include <hardware/hal_public.h>
-#endif
-
 namespace android {
 
 #define MIN_HWC_HEADER_VERSION HWC_HEADER_VERSION
@@ -110,8 +102,6 @@ void HWComposer::setEventHandler(EventHandler* handler)
                 std::placeholders::_1, std::placeholders::_2);
         mHwcDevice->registerVsyncCallback(vsyncHook);
     }
-    mFullScreenVideo = false;
-    mMaxLayers = 0;
 }
 
 // Load and prepare the hardware composer module.  Sets mHwc.
@@ -474,9 +464,7 @@ status_t HWComposer::setClientTarget(int32_t displayId,
 
 status_t HWComposer::prepare(DisplayDevice& displayDevice) {
     ATRACE_CALL();
-    int width = 0;
-    int height = 0;
-    int numLayers = 0;
+
     Mutex::Autolock _l(mDisplayLock);
     auto displayId = displayDevice.getHwcDisplayId();
     if (displayId == DisplayDevice::DISPLAY_ID_INVALID) {
@@ -570,78 +558,6 @@ status_t HWComposer::prepare(DisplayDevice& displayDevice) {
     if (error != HWC2::Error::None) {
         ALOGE("prepare: acceptChanges failed: %s", to_string(error).c_str());
         return BAD_INDEX;
-
-#ifdef AW_BOOSTUP_ENABLE
-    bool bFullScreenVideo = false;
-    numLayers = mLists[HWC_DISPLAY_PRIMARY]->numHwLayers;
-    if(numLayers <= 3)
-    {
-        hwc_layer_1_t &l = mLists[HWC_DISPLAY_PRIMARY]->hwLayers[0];
-#ifdef SUN8IW5P1
-        private_handle_t *psNativeHandle = (private_handle_t *)l.handle;
-        if(psNativeHandle && (psNativeHandle->format == HAL_PIXEL_FORMAT_YCrCb_420_SP
-                    || psNativeHandle->format == HAL_PIXEL_FORMAT_YV12))
-#elif defined SUN8IW6P1 || defined SUN9IW1P1
-        IMG_native_handle_t *psNativeHandle = (IMG_native_handle_t *)l.handle;
-        if(psNativeHandle && (psNativeHandle->iFormat == HAL_PIXEL_FORMAT_YCrCb_420_SP
-					|| psNativeHandle->iFormat == HAL_PIXEL_FORMAT_YV12))
-#endif
-        {
-            bFullScreenVideo = true;
-            if(mMaxLayers == 0)
-                mMaxLayers = numLayers;
-        }
-    }
-    if((bFullScreenVideo != mFullScreenVideo) || (numLayers < mMaxLayers))
-    {
-        char value[4];
-        mFullScreenVideo = bFullScreenVideo;
-        mMaxLayers = numLayers;
-
-        snprintf(value, sizeof(value), "%d", mMaxLayers - 1);
-        property_set("sys.boost_up_perf.layers", value);
-    }
-#endif
-
-    if (err == NO_ERROR) {
-        // here we're just making sure that "skip" layers are set
-        // to HWC_FRAMEBUFFER and we're also counting how many layers
-        // we have of each type.
-        //
-        // If there are no window layers, we treat the display has having FB
-        // composition, because SurfaceFlinger will use GLES to draw the
-        // wormhole region.
-        for (size_t i=0 ; i<mNumDisplays ; i++) {
-            DisplayData& disp(mDisplayData[i]);
-            disp.hasFbComp = false;
-            disp.hasOvComp = false;
-            if (disp.list) {
-                for (size_t i=0 ; i<disp.list->numHwLayers ; i++) {
-                    hwc_layer_1_t& l = disp.list->hwLayers[i];
-
-                    //ALOGD("prepare: %d, type=%d, handle=%p",
-                    //        i, l.compositionType, l.handle);
-
-                    if (l.flags & HWC_SKIP_LAYER) {
-                        l.compositionType = HWC_FRAMEBUFFER;
-                    }
-                    if (l.compositionType == HWC_FRAMEBUFFER) {
-                        disp.hasFbComp = true;
-                    }
-                    if (l.compositionType == HWC_OVERLAY) {
-                        disp.hasOvComp = true;
-                    }
-                    if (l.compositionType == HWC_CURSOR_OVERLAY) {
-                        disp.hasOvComp = true;
-                    }
-                }
-                if (disp.list->numHwLayers == (disp.framebufferTarget ? 1 : 0)) {
-                    disp.hasFbComp = true;
-                }
-            } else {
-                disp.hasFbComp = true;
-            }
-        }
     }
 
     return NO_ERROR;
